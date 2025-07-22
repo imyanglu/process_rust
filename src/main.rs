@@ -6,7 +6,7 @@ fn main() {
     let process_infos = process::get_poc().unwrap();
     process_infos
         .iter()
-        .filter(|&process| process.is_system())
+        .filter(|process| process.is_system())
         .for_each(|p| {
             println!("{}", p);
         });
