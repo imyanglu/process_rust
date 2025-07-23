@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -5,10 +7,13 @@ pub struct Config {
     white_list: Vec<String>,
 }
 impl Config {
-    fn white_list(&self) -> &Vec<String> {
-        &self.white_list
-    }
-    fn is_in_white_list(&self, name: &str) -> bool {
-        self.white_list().contains(&name.to_string())
+    pub fn is_in_white_list(&self, path: &str) -> bool {
+        let path = Path::new(path).canonicalize().unwrap();
+        let is_in_list = self.white_list.iter().any(|p| {
+            let list_path = Path::new(p).canonicalize().unwrap();
+            return path.starts_with(list_path);
+        });
+
+        is_in_list
     }
 }

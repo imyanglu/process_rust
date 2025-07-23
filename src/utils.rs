@@ -18,3 +18,8 @@ pub fn is_system_file(path: &str) -> bool {
     let file_path = Path::new(path);
     file_path.starts_with(sys_prefix)
 }
+
+pub fn is_in_white_list(white_list: &Vec<String>, path: &str) -> bool {
+    let path = Path::new(path);
+    white_list.iter().any(|p| Path::new(p) == path)
+}

@@ -60,11 +60,17 @@ fn get_process_memory_usage(pid: u32) -> Option<(String, usize)> {
 pub struct ProcessInfo {
     pub name: String,
     path: String,
-    memory_kb: usize,
-    private_memory_kb: usize,
+    pub memory_kb: usize,
+    pub private_memory_kb: usize,
     pid: u32,
 }
 impl ProcessInfo {
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+    pub fn pid(&self) -> u32 {
+        self.pid
+    }
     pub fn is_system(&self) -> bool {
         let sys_prefix = Path::new("C:\\Windows\\System32");
         let file_path = Path::new(&self.path);
