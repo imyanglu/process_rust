@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 pub fn scan_all_cache_directory() {
     let max_directory = 10;
+    
     let root_directory = Path::new("C:\\").to_path_buf();
     let mut cache_directory: Vec<PathBuf> = Vec::new();
     print!("开始扫描");
