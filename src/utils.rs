@@ -23,3 +23,11 @@ pub fn is_in_white_list(white_list: &Vec<String>, path: &str) -> bool {
     let path = Path::new(path);
     white_list.iter().any(|p| Path::new(p) == path)
 }
+
+pub fn convert_kb(kbs: usize) -> (usize, usize, usize) {
+    let total_mb = kbs / 1024;
+    let kb = kbs % 1024;
+    let gb = total_mb / 1024;
+    let mb = total_mb % 1024;
+    (gb, mb, kb)
+}
