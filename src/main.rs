@@ -7,8 +7,8 @@ pub mod model;
 pub mod perfect;
 pub mod process;
 pub mod utils;
-fn main() {
-    let pid = std::process::id();
+fn get_all_process(){
+     let pid = std::process::id();
     let config = utils::get_config().unwrap();
 
     let handle = thread::spawn(move || {
@@ -66,4 +66,7 @@ fn main() {
         }
     });
     handle.join().unwrap();
+}
+fn main() {
+   perfect::scan_all_cache_directory();
 }
