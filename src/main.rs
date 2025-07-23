@@ -4,6 +4,7 @@ use std::{thread, time::Duration};
 use crate::process::ProcessInfo;
 use crate::utils::convert_kb;
 pub mod model;
+pub mod perfect;
 pub mod process;
 pub mod utils;
 fn main() {
