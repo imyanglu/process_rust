@@ -1,12 +1,16 @@
+use crossbeam_queue::SegQueue;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::ffi::OsString;
+use threadpool::ThreadPool;
 
 use std::fmt::Display;
 
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::ffi::OsStringExt;
 use std::path::Path;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::thread::sleep;
 use windows::{
     Win32::{
@@ -137,34 +141,51 @@ pub fn get_process_info(pid: u32) -> Option<ProcessInfo> {
 }
 pub fn get_poc() -> Option<Vec<ProcessInfo>> {
     let path_map = get_driver_path();
-    let mut process_list: Vec<ProcessInfo> = vec![];
-    unsafe {
-        let mut pids = [0u32; 1024];
-        let size = (pids.len() * std::mem::size_of::<u32>()) as u32;
-        let mut bytes_returned = 0;
+    let path_map_arc = Arc::new(path_map);
+    let process_list: Arc<Mutex<Vec<ProcessInfo>>> = Arc::new(Mutex::new(Vec::new()));
+    let queue = Arc::new(SegQueue::new());
+    let mut pids = [0u32; 1024];
+    let size = (pids.len() * std::mem::size_of::<u32>()) as u32;
+    let mut bytes_returned = 0;
 
+    unsafe {
         if !K32EnumProcesses(pids.as_mut_ptr(), size, &mut bytes_returned).as_bool() {
             return None;
         }
         let mem_size = std::mem::size_of::<u32>();
-
         let count = bytes_returned as usize / mem_size;
-        for &pid in &pids[..count] {
-            if pid == 0 {
-                continue;
-            }
-            let process_info = get_process_info(pid);
-            if let Some(mut process_info) = process_info {
-                let real_path = process_info.path.clone();
-                let real_path_res = convert_nt_path(&real_path, &path_map);
-                if real_path_res.is_some() {
-                    process_info.path = real_path_res.unwrap();
-                }
-                process_list.push(process_info);
-            }
+        for pid in &pids[..count] {
+            queue.push(*pid);
         }
-        return Some(process_list);
+        let max_threads = 8;
+        let pool = ThreadPool::new(max_threads);
+        for _ in 0..max_threads {
+            let q = Arc::clone(&queue);
+            let path_thread = Arc::clone(&path_map_arc);
+            let process_list_clone = Arc::clone(&process_list);
+            pool.execute(move || {
+                while let Some(pid) = q.pop() {
+                    if pid == 0 {
+                        continue;
+                    }
+                    let process_info = get_process_info(pid);
+                    if process_info.is_some() {
+                        let mut process_list = process_list_clone.lock().unwrap();
+                        let mut process_info = process_info.unwrap();
+
+                        let real_path_res = convert_nt_path(&process_info.path, &path_thread);
+                        if real_path_res.is_some() {
+                            process_info.path = real_path_res.unwrap();
+                        }
+                        process_list.push(process_info);
+                    }
+                }
+            })
+        }
+        pool.join();
     }
+    let list = process_list.lock().unwrap();
+    return Some(list.to_vec());
 }
 
 pub fn kill_process(pid: u32) -> bool {
