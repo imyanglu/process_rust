@@ -17,3 +17,20 @@ impl Config {
         is_in_list
     }
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct IPRes {
+    ip: String,
+    country: String,
+    country_code: String,
+    region: String,
+    zip_code: String,
+
+    city: String,
+    state_code: String,
+    latitude: f32,
+    longitude: f32,
+    isp: String,
+    isp_asn: usize,
+    gdpr: bool,
+}
