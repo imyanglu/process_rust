@@ -5,7 +5,49 @@ use std::{
     time::Instant,
 };
 
+use tokio::fs;
+
 static dir_count: AtomicU64 = AtomicU64::new(0);
+pub fn scan_dir(search: &str, path: &Path, file_extensions: &[&str]) {
+    let mut exist_file_path: Vec<String> = Vec::new();
+    let root_directory = Path::new("C:\\").to_path_buf();
+    let a = scan_file(
+        root_directory,
+        &mut exist_file_path,
+        file_extensions,
+        search,
+    )
+    .await;
+}
+pub async fn scan_file<'a>(
+    directory: PathBuf,
+    file_path: &mut Vec<String>,
+    file_extensions: &[&str],
+    search: &'a str,
+) {
+    dir_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    if (directory.is_file()) {
+        let extension = directory.extension().and_then(|s| s.to_str());
+        if let Some(extension) = extension {
+            if file_extensions.contains(&extension) {
+                let file_content = fs::read_to_string(&directory).await.unwrap();
+                if file_content.contains(search) {
+                    file_path.push(directory.to_string_lossy().to_string());
+                }
+            }
+        }
+    } else {
+        if let Ok(entries) = directory.read_dir() {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path_buf = entry.path();
+                    scan_file(path_buf, file_path, file_extensions, search).await;
+                }
+            }
+        }
+    }
+}
+
 pub fn scan_all_cache_directory() {
     let max_directory = 10;
 
