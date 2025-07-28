@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path};
+use std::{env, fs, path::Path, time::Instant};
 
 use crate::{perfect::search_file, process::kill_process};
 pub mod convert;
@@ -40,12 +40,12 @@ fn query_process_by_port(port_num: u16) {
 }
 #[tokio::main]
 async fn main() {
+    let start = Instant::now();
     let args: Vec<String> = env::args().into_iter().skip(1).collect();
     let command = args.get(0);
     let p1 = args.get(1);
     let p2 = args.get(2);
     let p3 = args.get(3);
-    let p4 = args.get(4);
     if command.is_none() || p1.is_none() {
         println!("参数为空!");
         return;
@@ -101,17 +101,19 @@ async fn main() {
             println!("文件夹不存在")
         }
         "-F" => {
-            if p2.is_none() || p3.is_none() {
+            if p1.is_none() || p2.is_none() {
                 println!("-f 文件路径 关键字 txt,tsx...等扩展");
                 return;
             }
-            let path = Path::new(p2.expect("路径错误"));
-            let search = p3.expect("关键字错误");
-            let ext_str = p4.expect("扩展错误");
+            let path = Path::new(p1.expect("路径错误"));
+            let search = p2.expect("关键字错误");
+            let ext_str = p3.expect("扩展错误");
             let ext: Vec<&str> = ext_str.split(",").collect();
             search_file(&search, path, &ext).await;
         }
 
         _ => {}
     };
+    let end = Instant::now();
+    println!("耗时:{}ms", end.duration_since(start).as_millis());
 }
