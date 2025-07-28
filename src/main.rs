@@ -1,6 +1,6 @@
 use std::{env, fs, path::Path};
 
-use crate::process::kill_process;
+use crate::{perfect::search_file, process::kill_process};
 pub mod convert;
 pub mod model;
 pub mod net;
@@ -42,14 +42,16 @@ fn query_process_by_port(port_num: u16) {
 async fn main() {
     let args: Vec<String> = env::args().into_iter().skip(1).collect();
     let command = args.get(0);
-    let params = args.get(1);
-    let file_path = args.get(2);
-    if command.is_none() || params.is_none() {
+    let p1 = args.get(1);
+    let p2 = args.get(2);
+    let p3 = args.get(3);
+    let p4 = args.get(4);
+    if command.is_none() || p1.is_none() {
         println!("参数为空!");
         return;
     }
     let c = command.unwrap();
-    let p = params.unwrap();
+    let p = p1.unwrap();
     let upper_c = c.to_uppercase();
     match upper_c.as_str() {
         "-P" => {
@@ -98,13 +100,18 @@ async fn main() {
             }
             println!("文件夹不存在")
         }
-        "-S" => {
-            if file_path.is_none() {
-                println!("请输入文件路径");
+        "-F" => {
+            if p2.is_none() || p3.is_none() {
+                println!("-f 文件路径 关键字 txt,tsx...等扩展");
                 return;
             }
-            let path = Path::new(file_path.unwrap());
+            let path = Path::new(p2.expect("路径错误"));
+            let search = p3.expect("关键字错误");
+            let ext_str = p4.expect("扩展错误");
+            let ext: Vec<&str> = ext_str.split(",").collect();
+            search_file(&search, path, &ext).await;
         }
+
         _ => {}
     };
 }
