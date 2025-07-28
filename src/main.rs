@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path, time::Instant};
+use std::{collections::HashSet, env, fs, path::Path, time::Instant};
 
 use crate::{perfect::search_file, process::kill_process};
 pub mod convert;
@@ -108,8 +108,8 @@ async fn main() {
             let path = Path::new(p1.expect("路径错误"));
             let search = p2.expect("关键字错误");
             let ext_str = p3.expect("扩展错误");
-            let ext: Vec<&str> = ext_str.split(",").collect();
-            search_file(&search, path, &ext).await;
+            let ext = ext_str.split(",").into_iter().collect();
+            search_file(&search, path, ext).await;
         }
 
         _ => {}
